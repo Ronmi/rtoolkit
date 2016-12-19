@@ -26,7 +26,7 @@ func DefaultCookieMaker(name, value string, ttl int) *http.Cookie {
 // Manager is main session class
 type Manager struct {
 	Store store.Store // default to store.InMemory
-	Key   string      // default to "SESSION_ID", this is used both in cookie and context
+	Key   string      // default to "SESSION_ID", this is used in cookie
 	TTL   int         // default to 7200 (2 hours)
 }
 
