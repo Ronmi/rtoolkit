@@ -1,9 +1,6 @@
 package store
 
 import (
-	"crypto/md5"
-	"crypto/rand"
-	"encoding/base64"
 	"errors"
 	"sync"
 	"time"
@@ -57,24 +54,17 @@ func (s *memoryStore) SetTTL(ttl int) {
 func (s *memoryStore) Allocate() (id string, err error) {
 	go s.gc() // run gc
 
-	enc := base64.StdEncoding
-	has := true
-	src := make([]byte, 64)
-	for has {
-		// create a 64 bytes random data
-		_, _ = rand.Read(src)
-
-		tmp := md5.Sum(src)
-		id = enc.EncodeToString(tmp[0:])
-
-		// lock only here
+	id = GenerateRandomKey(32, func(id string) bool {
 		s.lock.Lock()
-		_, has = s.data[id]
-		if !has {
+		defer s.lock.Unlock()
+
+		_, ok := s.data[id]
+		if !ok {
 			s.data[id] = newMemEle()
 		}
-		s.lock.Unlock()
-	}
+
+		return !ok
+	})
 
 	return
 }
@@ -83,6 +73,10 @@ func (s *memoryStore) Release(id string) {
 	s.lock.Lock()
 	defer s.lock.Unlock()
 
+	s.doRelease(id)
+}
+
+func (s *memoryStore) doRelease(id string) {
 	if data, ok := s.data[id]; ok {
 		data.Lock()
 		defer data.Unlock()
@@ -117,17 +111,18 @@ func (s *memoryStore) gc() {
 		return
 	}
 
+	s.lock.Lock()
+	defer s.lock.Unlock()
+
 	for id, ele := range s.data {
 		if ele.isValid(s.ttl) {
 			continue
 		}
 
-		s.Release(id)
+		s.doRelease(id)
 	}
 
-	s.lock.Lock()
 	s.gcing = false
-	s.lock.Unlock()
 }
 
 func (s *memoryStore) getElement(id string) (*memoryElement, error) {
