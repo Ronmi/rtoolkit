@@ -11,12 +11,15 @@ type Store interface {
 	SetTTL(ttl int)
 
 	// Allocate creates a new session id, returns error if store is full
+	//
+	// Implementation MUST allocate space for the session id before returning it,
+	// and ttl value MUST follow what was set by SetTTL().
 	Allocate() (string, error)
 
-	// Get returns session data (string), returns error if not found
+	// Get returns session data (string), returns error if not found or something goes wrong
 	Get(sessID string) (string, error)
 
-	// Set saves session data, returns error if not found or store is full
+	// Set saves session data, returns error if not found or something goes wrong
 	Set(sessID string, data string) error
 
 	// Release clears a session, never fail
