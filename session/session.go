@@ -4,7 +4,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/Patrolavia/toolkit/session/store"
+	"github.com/Ronmi/rtoolkit/session/store"
 )
 
 // CookieMaker makes a cookie for session, ttl < 0 means it is expired
