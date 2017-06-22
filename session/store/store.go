@@ -6,21 +6,36 @@ import (
 	"encoding/base64"
 )
 
+const (
+	// Characters a seed value can use
+	SeedChars = "abcdefghijklmnopqrstuvwxyz1234567890"
+
+	SeedLength = 32
+)
+
 type Store interface {
 	// SetTTL decides how long before data to be considered invalid (in seconds)
 	SetTTL(ttl int)
 
 	// Allocate creates a new session id, returns error if store is full
 	//
+	// Size of session id depends on store.
+	//
 	// Implementation MUST allocate space for the session id before returning it,
 	// and ttl value MUST follow what was set by SetTTL().
-	Allocate() (string, error)
+	//
+	// seed is used for session validating, see session.Manager.Start() for detail
+	Allocate(seed string) (string, error)
 
 	// Get returns session data (string), returns error if not found or something goes wrong
-	Get(sessID string) (string, error)
+	//
+	// It MUST refresh ttl value.
+	Get(sessID string) (seed, data string, err error)
 
 	// Set saves session data, returns error if not found or something goes wrong
-	Set(sessID string, data string) error
+	//
+	// It MUST refresh ttl value.
+	Set(sessID string, seed, data string) error
 
 	// Release clears a session, never fail
 	Release(sessID string)

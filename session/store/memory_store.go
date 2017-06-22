@@ -9,13 +9,15 @@ import (
 type memoryElement struct {
 	*sync.Mutex // protects only data, lastUsed is not protected
 	data        string
+	seed        string
 	lastUsed    int64
 }
 
-func newMemEle() *memoryElement {
+func newMemEle(seed string) *memoryElement {
 	return &memoryElement{
 		&sync.Mutex{},
 		"",
+		seed,
 		time.Now().UnixNano(),
 	}
 }
@@ -29,14 +31,15 @@ func (e *memoryElement) invalid(ttl int64) {
 	e.lastUsed = 0
 }
 
-func (e *memoryElement) get() string {
+func (e *memoryElement) get() (seed, data string) {
 	e.lastUsed = time.Now().UnixNano()
-	return e.data
+	return e.seed, e.data
 }
 
-func (e *memoryElement) set(data string) {
+func (e *memoryElement) set(seed, data string) {
 	e.lastUsed = time.Now().UnixNano()
 	e.data = data
+	e.seed = seed
 }
 
 type memoryStore struct {
@@ -51,7 +54,7 @@ func (s *memoryStore) SetTTL(ttl int) {
 	s.ttl = int64(ttl) * int64(time.Second)
 }
 
-func (s *memoryStore) Allocate() (id string, err error) {
+func (s *memoryStore) Allocate(seed string) (id string, err error) {
 	go s.gc() // run gc
 
 	id = GenerateRandomKey(32, func(id string) bool {
@@ -60,7 +63,7 @@ func (s *memoryStore) Allocate() (id string, err error) {
 
 		_, ok := s.data[id]
 		if !ok {
-			s.data[id] = newMemEle()
+			s.data[id] = newMemEle(seed)
 		}
 
 		return !ok
@@ -136,7 +139,7 @@ func (s *memoryStore) getElement(id string) (*memoryElement, error) {
 	return e, nil
 }
 
-func (s *memoryStore) Get(id string) (data string, err error) {
+func (s *memoryStore) Get(id string) (seed, data string, err error) {
 	e, err := s.getElement(id)
 	if err != nil {
 		return
@@ -145,13 +148,14 @@ func (s *memoryStore) Get(id string) (data string, err error) {
 	e.Lock()
 	defer e.Unlock()
 	if !e.isValid(s.ttl) {
-		return "", errors.New("session expired: " + id)
+		return "", "", errors.New("session expired: " + id)
 	}
 
-	return e.get(), nil
+	seed, data = e.get()
+	return
 }
 
-func (s *memoryStore) Set(id string, data string) error {
+func (s *memoryStore) Set(id string, seed, data string) error {
 	e, err := s.getElement(id)
 	if err != nil {
 		return err
@@ -162,7 +166,7 @@ func (s *memoryStore) Set(id string, data string) error {
 	if !e.isValid(s.ttl) {
 		return errors.New("session expired: " + id)
 	}
-	e.set(data)
+	e.set(seed, data)
 
 	return nil
 }
