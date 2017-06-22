@@ -99,7 +99,7 @@ func TestStore(t *testing.T) {
 		seed := genSeed()
 		id, _ := s.Allocate(seed)
 
-		time.Sleep(s.ttl)
+		time.Sleep(s.ttl + time.Second)
 
 		aSeed, aData, err := s.Get(id)
 		if err == nil {
