@@ -13,6 +13,7 @@ const (
 	SeedLength = 32
 )
 
+// Store defines how a session storage should lokk like.
 type Store interface {
 	// SetTTL decides how long before data to be considered invalid (in seconds)
 	SetTTL(ttl int)
