@@ -58,7 +58,38 @@ func createMux(n int) *PathMux {
 	return m
 }
 
-func BenchmarkDispatch(b *testing.B) {
+func BenchmarkRouterInit(b *testing.B) {
+	for i := 0; i < b.N; i++ {
+		New()
+	}
+}
+
+func BenchmarkRouterRegister(b *testing.B) {
+	f := func(m *PathMux, rules []string, n int) {
+		for i := 0; i < n; i++ {
+			for _, r := range rules {
+				m.HandleFunc(r, h)
+			}
+		}
+	}
+	cases := []int{
+		100, 200, 500, 1000,
+	}
+
+	for _, c := range cases {
+		b.Run(
+			fmt.Sprintf("%d Rules", c),
+			func(b *testing.B) {
+				rules := createRules(c, "*", "*")
+				m := New()
+				b.ResetTimer()
+				f(m, rules, b.N)
+			},
+		)
+	}
+}
+
+func BenchmarkRouterDispatch(b *testing.B) {
 	tmpl := "http://localhost/lv1/lv2/%d/var1/var2"
 	cases := []struct {
 		n    int
