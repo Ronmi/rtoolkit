@@ -41,40 +41,58 @@ func createRules(n int, var1, var2 string) []string {
 	return routingRules
 }
 
-func benchDispatch(n int, b *testing.B) {
+func benchDispatch(m http.Handler, req *http.Request, b *testing.B) {
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		m.ServeHTTP(httptest.NewRecorder(), req)
+	}
+}
+
+func createMux(n int) *PathMux {
 	rules := createRules(n, "*", "*")
 	m := New()
 	for _, r := range rules {
 		m.HandleFunc(r, h)
 	}
-	sz := len(rules)
-	min, max := 0, sz-1
-	mid := (min + max) / 2
+
+	return m
+}
+
+func BenchmarkDispatch(b *testing.B) {
 	tmpl := "http://localhost/lv1/lv2/%d/var1/var2"
-	minReq := makeReq(fmt.Sprintf(tmpl, min))
-	midReq := makeReq(fmt.Sprintf(tmpl, mid))
-	maxReq := makeReq(fmt.Sprintf(tmpl, max))
-
-	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
-		m.ServeHTTP(httptest.NewRecorder(), minReq)
-		m.ServeHTTP(httptest.NewRecorder(), midReq)
-		m.ServeHTTP(httptest.NewRecorder(), maxReq)
+	cases := []struct {
+		n    int
+		pos  int
+		name string
+	}{
+		{100, 0, "HEAD"},
+		{100, 50, "MID"},
+		{100, 99, "TAIL"},
+		{100, 100, "404"},
+		{200, 0, "HEAD"},
+		{200, 100, "MID"},
+		{200, 199, "TAIL"},
+		{200, 200, "404"},
+		{500, 0, "HEAD"},
+		{500, 250, "MID"},
+		{500, 499, "TAIL"},
+		{500, 500, "404"},
+		{1000, 0, "HEAD"},
+		{1000, 500, "MID"},
+		{1000, 999, "TAIL"},
+		{1000, 1000, "404"},
 	}
-}
 
-func BenchmarkDispatch100(b *testing.B) {
-	benchDispatch(100, b)
-}
-
-func BenchmarkDispatch200(b *testing.B) {
-	benchDispatch(200, b)
-}
-
-func BenchmarkDispatch500(b *testing.B) {
-	benchDispatch(500, b)
-}
-
-func BenchmarkDispatch1000(b *testing.B) {
-	benchDispatch(1000, b)
+	for _, c := range cases {
+		b.Run(
+			fmt.Sprintf("%d-%s", c.n, c.name),
+			func(b *testing.B) {
+				benchDispatch(
+					createMux(c.n),
+					makeReq(fmt.Sprintf(tmpl, c.pos)),
+					b,
+				)
+			},
+		)
+	}
 }
