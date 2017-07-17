@@ -35,3 +35,9 @@ func (m middleware) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	m.h.ServeHTTP(w, req)
 }
+
+// FromMiddleware grabs session object passed by middleware
+func FromMiddleware(c context.Context) (sess *Session, found bool) {
+	sess, found = c.Value("session").(*Session)
+	return
+}
