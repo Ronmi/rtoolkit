@@ -6,26 +6,35 @@ import (
 	"strings"
 )
 
-// node is an element in mapping tree
+// pathNode is an element in mapping tree, dispatching by path
 //
-// A node can contains mappings to child node and a handler
-type node struct {
-	child    map[string]*node
-	catchAll *node
+// A pathNode can contains mappings to child pathNode and a handler
+type pathNode struct {
+	child    map[string]*pathNode
+	catchAll *pathNode
 	h        http.Handler
 }
 
-func createNode() *node {
-	return &node{child: map[string]*node{}}
+func createPathNode() *pathNode {
+	return &pathNode{child: map[string]*pathNode{}}
+}
+
+func (n *pathNode) Serve(fallback http.Handler, w http.ResponseWriter, r *http.Request) {
+	if h, found := n.match(r); found {
+		h.ServeHTTP(w, r)
+		return
+	}
+
+	fallback.ServeHTTP(w, r)
 }
 
 // Go idiom
-func (n *node) match(r *http.Request) (h http.Handler, found bool) {
+func (n *pathNode) match(r *http.Request) (h http.Handler, found bool) {
 	arr := strings.Split(strings.Trim(r.URL.Path, "/"), "/")
 	return n.doMatch(arr)
 }
 
-func (n *node) doMatch(arr []string) (h http.Handler, found bool) {
+func (n *pathNode) doMatch(arr []string) (h http.Handler, found bool) {
 	if len(arr) < 1 {
 		if n.h != nil {
 			return n.h, true
@@ -45,12 +54,12 @@ func (n *node) doMatch(arr []string) (h http.Handler, found bool) {
 	return
 }
 
-func (n *node) register(wild, pattern string, h http.Handler) {
+func (n *pathNode) Register(wild, pattern string, h http.Handler) {
 	arr := strings.Split(strings.Trim(pattern, "/"), "/")
 	n.doRegister(wild, arr, h)
 }
 
-func (n *node) doRegister(wild string, arr []string, h http.Handler) {
+func (n *pathNode) doRegister(wild string, arr []string, h http.Handler) {
 	if len(arr) < 1 {
 		n.h = h
 		return
@@ -59,7 +68,7 @@ func (n *node) doRegister(wild string, arr []string, h http.Handler) {
 	cur := arr[0]
 	if cur == wild {
 		if n.catchAll == nil {
-			n.catchAll = createNode()
+			n.catchAll = createPathNode()
 		}
 		n.catchAll.doRegister(wild, arr[1:], h)
 		return
@@ -67,16 +76,16 @@ func (n *node) doRegister(wild string, arr []string, h http.Handler) {
 
 	next, ok := n.child[cur]
 	if !ok {
-		next = createNode()
+		next = createPathNode()
 		n.child[cur] = next
 	}
 
 	next.doRegister(wild, arr[1:], h)
 }
 
-// Mux is a http.ServerMux compitable mux implementation
-type Mux struct {
-	mappings   *node
+// PathMux is a http.ServerMux compitable mux implementation, dispatches by path
+type PathMux struct {
+	mappings   Node
 	Wildcard   string
 	ErrHandler http.Handler
 }
@@ -86,12 +95,12 @@ func errHandler(w http.ResponseWriter, r *http.Request) {
 	return
 }
 
-// New creates a new Mux with default wildcard and error handler.
+// New creates a new PathMux with default settings.
 //
 // Wildcard defaults to "*". Error handler returns 404 NOT FOUND for every error.
-func New() *Mux {
-	return &Mux{
-		mappings:   createNode(),
+func New() *PathMux {
+	return &PathMux{
+		mappings:   createPathNode(),
 		Wildcard:   "*",
 		ErrHandler: http.HandlerFunc(errHandler),
 	}
@@ -102,12 +111,12 @@ func New() *Mux {
 // It panics if pattern is invalid.
 //
 // This method is not thread-safe.
-func (m *Mux) Handle(pattern string, h http.Handler) {
+func (m *PathMux) Handle(pattern string, h http.Handler) {
 	if !strings.HasPrefix(pattern, "/") {
 		panic(errors.New("mux: pattern must begin with /"))
 	}
 
-	m.mappings.register(m.Wildcard, pattern, h)
+	m.mappings.Register(m.Wildcard, pattern, h)
 }
 
 // Handle registers a handler for specified pattern
@@ -115,19 +124,11 @@ func (m *Mux) Handle(pattern string, h http.Handler) {
 // It panics if pattern is invalid.
 //
 // This method is not thread-safe.
-func (m *Mux) HandleFunc(pattern string, h func(http.ResponseWriter, *http.Request)) {
+func (m *PathMux) HandleFunc(pattern string, h func(http.ResponseWriter, *http.Request)) {
 	m.Handle(pattern, http.HandlerFunc(h))
 }
 
 // Dispatch finds correct handler, or return Mux.ErrHandler if error
-func (m *Mux) Dispatch(r *http.Request) http.Handler {
-	if h, ok := m.mappings.match(r); ok {
-		return h
-	}
-
-	return m.ErrHandler
-}
-
-func (m *Mux) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	m.Dispatch(r).ServeHTTP(w, r)
+func (m *PathMux) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	m.mappings.Serve(m.ErrHandler, w, r)
 }
