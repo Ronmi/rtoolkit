@@ -50,7 +50,7 @@ func benchDispatch(m http.Handler, req *http.Request, b *testing.B) {
 
 func createMux(n int) *PathMux {
 	rules := createRules(n, "*", "*")
-	m := New()
+	m := ByPath()
 	for _, r := range rules {
 		m.HandleFunc(r, h)
 	}
@@ -60,7 +60,7 @@ func createMux(n int) *PathMux {
 
 func BenchmarkRouterInit(b *testing.B) {
 	for i := 0; i < b.N; i++ {
-		New()
+		ByPath()
 	}
 }
 
@@ -81,7 +81,7 @@ func BenchmarkRouterRegister(b *testing.B) {
 			fmt.Sprintf("%d Rules", c),
 			func(b *testing.B) {
 				rules := createRules(c, "*", "*")
-				m := New()
+				m := ByPath()
 				b.ResetTimer()
 				f(m, rules, b.N)
 			},

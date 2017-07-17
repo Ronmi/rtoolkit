@@ -19,15 +19,6 @@ func createPathNode() *pathNode {
 	return &pathNode{child: map[string]*pathNode{}}
 }
 
-func (n *pathNode) Serve(fallback http.Handler, w http.ResponseWriter, r *http.Request) {
-	if h, found := n.match(r); found {
-		h.ServeHTTP(w, r)
-		return
-	}
-
-	fallback.ServeHTTP(w, r)
-}
-
 // Go idiom
 func (n *pathNode) match(r *http.Request) (h http.Handler, found bool) {
 	arr := strings.Split(strings.Trim(r.URL.Path, "/"), "/")
@@ -54,7 +45,7 @@ func (n *pathNode) doMatch(arr []string) (h http.Handler, found bool) {
 	return
 }
 
-func (n *pathNode) Register(wild, pattern string, h http.Handler) {
+func (n *pathNode) register(wild, pattern string, h http.Handler) {
 	arr := strings.Split(strings.Trim(pattern, "/"), "/")
 	n.doRegister(wild, arr, h)
 }
@@ -85,7 +76,7 @@ func (n *pathNode) doRegister(wild string, arr []string, h http.Handler) {
 
 // PathMux is a http.ServerMux compitable mux implementation, dispatches by path
 type PathMux struct {
-	mappings   Node
+	mappings   *pathNode
 	Wildcard   string
 	ErrHandler http.Handler
 }
@@ -95,10 +86,10 @@ func errHandler(w http.ResponseWriter, r *http.Request) {
 	return
 }
 
-// New creates a new PathMux with default settings.
+// ByPath creates a new PathMux with default settings.
 //
 // Wildcard defaults to "*". Error handler returns 404 NOT FOUND for every error.
-func New() *PathMux {
+func ByPath() *PathMux {
 	return &PathMux{
 		mappings:   createPathNode(),
 		Wildcard:   "*",
@@ -116,7 +107,7 @@ func (m *PathMux) Handle(pattern string, h http.Handler) {
 		panic(errors.New("mux: pattern must begin with /"))
 	}
 
-	m.mappings.Register(m.Wildcard, pattern, h)
+	m.mappings.register(m.Wildcard, pattern, h)
 }
 
 // Handle registers a handler for specified pattern
@@ -130,5 +121,9 @@ func (m *PathMux) HandleFunc(pattern string, h func(http.ResponseWriter, *http.R
 
 // Dispatch finds correct handler, or return Mux.ErrHandler if error
 func (m *PathMux) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	m.mappings.Serve(m.ErrHandler, w, r)
+	if h, found := m.mappings.match(r); found {
+		h.ServeHTTP(w, r)
+		return
+	}
+	m.ErrHandler.ServeHTTP(w, r)
 }
