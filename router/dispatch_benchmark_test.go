@@ -7,8 +7,6 @@ import (
 	"net/http/httptest"
 	"net/url"
 	"testing"
-
-	"github.com/gorilla/mux"
 )
 
 func h(w http.ResponseWriter, r *http.Request) {}
@@ -44,8 +42,8 @@ func createRules(n int, var1, var2 string) []string {
 }
 
 func benchDispatch(n int, b *testing.B) {
-	rules := createRules(n, "{var1}", "{var2}")
-	m := mux.NewRouter()
+	rules := createRules(n, "*", "*")
+	m := New()
 	for _, r := range rules {
 		m.HandleFunc(r, h)
 	}
