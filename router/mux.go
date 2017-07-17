@@ -20,7 +20,12 @@ func createNode() *node {
 }
 
 // Go idiom
-func (n *node) match(arr []string) (h http.Handler, found bool) {
+func (n *node) match(r *http.Request) (h http.Handler, found bool) {
+	arr := strings.Split(strings.Trim(r.URL.Path, "/"), "/")
+	return n.doMatch(arr)
+}
+
+func (n *node) doMatch(arr []string) (h http.Handler, found bool) {
 	if len(arr) < 1 {
 		if n.h != nil {
 			return n.h, true
@@ -30,17 +35,22 @@ func (n *node) match(arr []string) (h http.Handler, found bool) {
 
 	cur := arr[0]
 	if next, ok := n.child[cur]; ok {
-		h, found = next.match(arr[1:])
+		h, found = next.doMatch(arr[1:])
 	}
 
 	if !found && n.catchAll != nil {
-		h, found = n.catchAll.match(arr[1:])
+		h, found = n.catchAll.doMatch(arr[1:])
 	}
 
 	return
 }
 
-func (n *node) register(wild string, arr []string, h http.Handler) {
+func (n *node) register(wild, pattern string, h http.Handler) {
+	arr := strings.Split(strings.Trim(pattern, "/"), "/")
+	n.doRegister(wild, arr, h)
+}
+
+func (n *node) doRegister(wild string, arr []string, h http.Handler) {
 	if len(arr) < 1 {
 		n.h = h
 		return
@@ -51,7 +61,7 @@ func (n *node) register(wild string, arr []string, h http.Handler) {
 		if n.catchAll == nil {
 			n.catchAll = createNode()
 		}
-		n.catchAll.register(wild, arr[1:], h)
+		n.catchAll.doRegister(wild, arr[1:], h)
 		return
 	}
 
@@ -61,7 +71,7 @@ func (n *node) register(wild string, arr []string, h http.Handler) {
 		n.child[cur] = next
 	}
 
-	next.register(wild, arr[1:], h)
+	next.doRegister(wild, arr[1:], h)
 }
 
 // Mux is a http.ServerMux compitable mux implementation
@@ -97,8 +107,7 @@ func (m *Mux) Handle(pattern string, h http.Handler) {
 		panic(errors.New("mux: pattern must begin with /"))
 	}
 
-	arr := strings.Split(strings.Trim(pattern, "/"), "/")
-	m.mappings.register(m.Wildcard, arr, h)
+	m.mappings.register(m.Wildcard, pattern, h)
 }
 
 // Handle registers a handler for specified pattern
@@ -111,9 +120,8 @@ func (m *Mux) HandleFunc(pattern string, h func(http.ResponseWriter, *http.Reque
 }
 
 // Dispatch finds correct handler, or return Mux.ErrHandler if error
-func (m *Mux) Dispatch(uri string) http.Handler {
-	arr := strings.Split(strings.Trim(uri, "/"), "/")
-	if h, ok := m.mappings.match(arr); ok {
+func (m *Mux) Dispatch(r *http.Request) http.Handler {
+	if h, ok := m.mappings.match(r); ok {
 		return h
 	}
 
@@ -121,5 +129,5 @@ func (m *Mux) Dispatch(uri string) http.Handler {
 }
 
 func (m *Mux) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	m.Dispatch(r.URL.Path).ServeHTTP(w, r)
+	m.Dispatch(r).ServeHTTP(w, r)
 }
