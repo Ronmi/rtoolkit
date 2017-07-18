@@ -31,7 +31,7 @@ func makeReq(uri string) *http.Request {
 	return ret
 }
 
-func createRules(n int, var1, var2 string) []string {
+func createPathRules(n int, var1, var2 string) []string {
 	routingRules := make([]string, n)
 
 	for i := 0; i < n; i++ {
@@ -48,8 +48,8 @@ func benchDispatch(m http.Handler, req *http.Request, b *testing.B) {
 	}
 }
 
-func createMux(n int) *PathMux {
-	rules := createRules(n, "*", "*")
+func createPathMux(n int) *PathMux {
+	rules := createPathRules(n, "*", "*")
 	m := ByPath()
 	for _, r := range rules {
 		m.HandleFunc(r, h)
@@ -80,7 +80,7 @@ func BenchmarkPathMuxRegister(b *testing.B) {
 		b.Run(
 			fmt.Sprintf("%d Rules", c),
 			func(b *testing.B) {
-				rules := createRules(c, "*", "*")
+				rules := createPathRules(c, "*", "*")
 				m := ByPath()
 				b.ResetTimer()
 				f(m, rules, b.N)
@@ -119,7 +119,7 @@ func BenchmarkPathMuxDispatch(b *testing.B) {
 			fmt.Sprintf("%d-%s", c.n, c.name),
 			func(b *testing.B) {
 				benchDispatch(
-					createMux(c.n),
+					createPathMux(c.n),
 					makeReq(fmt.Sprintf(tmpl, c.pos)),
 					b,
 				)
