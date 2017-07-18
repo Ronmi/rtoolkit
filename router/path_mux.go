@@ -110,7 +110,7 @@ func (m *PathMux) Handle(pattern string, h http.Handler) {
 	m.mappings.register(m.Wildcard, pattern, h)
 }
 
-// Handle registers a handler for specified pattern
+// HandleFunc registers a handler function for specified pattern
 //
 // It panics if pattern is invalid.
 //
@@ -119,7 +119,7 @@ func (m *PathMux) HandleFunc(pattern string, h func(http.ResponseWriter, *http.R
 	m.Handle(pattern, http.HandlerFunc(h))
 }
 
-// Dispatch finds correct handler, or return Mux.ErrHandler if error
+// ServeHTTP finds correct handler and executes it, or use PathMux.ErrHandler if no match
 func (m *PathMux) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if h, found := m.mappings.match(r); found {
 		h.ServeHTTP(w, r)
