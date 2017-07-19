@@ -1,10 +1,19 @@
 package router
 
 import (
+	"context"
 	"errors"
 	"net/http"
 	"strings"
 )
+
+const PathVarKey = "pathData"
+
+// GetPathVariable extracts variables from context
+func GetPathVariable(c context.Context) (data []string, ok bool) {
+	data, ok = c.Value(PathVarKey).([]string)
+	return
+}
 
 // pathNode is an element in mapping tree, dispatching by path
 //
@@ -20,34 +29,42 @@ func createPathNode() *pathNode {
 }
 
 // Go idiom
-func (n *pathNode) match(r *http.Request) (h http.Handler, found bool) {
+func (n *pathNode) match(r *http.Request) (h http.Handler, data []string, found bool) {
 	arr := strings.Split(strings.Trim(r.URL.Path, "/"), "/")
-	return n.doMatch(arr)
+	return n.doMatch(arr, make([]string, 0, len(arr)))
 }
 
-func (n *pathNode) doMatch(arr []string) (h http.Handler, found bool) {
+func (n *pathNode) doMatch(arr []string, oldData []string) (h http.Handler, data []string, found bool) {
+	data = oldData
 	if len(arr) < 1 {
 		if n.h != nil {
-			return n.h, true
+			return n.h, oldData, true
 		}
 		return
 	}
 
 	cur := arr[0]
-	if next, ok := n.child[cur]; ok {
-		if h, found = next.doMatch(arr[1:]); found {
-			return
+	if cur != "" {
+		if next, ok := n.child[cur]; ok {
+			if h, data, found = next.doMatch(arr[1:], oldData); found {
+				return
+			}
 		}
-	}
 
-	if n.catchAll != nil {
-		if h, found = n.catchAll.doMatch(arr[1:]); found {
-			return
+		if n.catchAll != nil {
+			tmpData := oldData
+			l := len(tmpData)
+			tmpData = append(tmpData, "")
+			if h, data, found = n.catchAll.doMatch(arr[1:], tmpData); found {
+				data[l] = cur
+				return
+			}
+			data = oldData
 		}
 	}
 
 	if next, ok := n.child[""]; ok {
-		return next.h, true
+		return next.h, data, true
 	}
 
 	return
@@ -135,8 +152,9 @@ func (m *PathMux) HandleFunc(pattern string, h func(http.ResponseWriter, *http.R
 
 // ServeHTTP finds correct handler and executes it, or use PathMux.ErrHandler if no match
 func (m *PathMux) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	if h, found := m.mappings.match(r); found {
-		h.ServeHTTP(w, r)
+	if h, data, found := m.mappings.match(r); found {
+		req := r.WithContext(context.WithValue(r.Context(), PathVarKey, data))
+		h.ServeHTTP(w, req)
 		return
 	}
 	m.ErrHandler.ServeHTTP(w, r)
