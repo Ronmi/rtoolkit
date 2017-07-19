@@ -7,12 +7,49 @@ import (
 	"strings"
 )
 
-const PathVarKey = "pathData"
+// ContextKey represents a key used in context
+type ContextKey string
+
+const PathVarKey = ContextKey("pathData")
 
 // GetPathVariable extracts variables from context
 func GetPathVariable(c context.Context) (data []string, ok bool) {
-	data, ok = c.Value(PathVarKey).([]string)
+	v := c.Value(PathVarKey)
+	if v == nil {
+		return
+	}
+
+	data, ok = v.([]string)
 	return
+}
+
+// FillPathVariable is simple halper to load path variables into custom variable
+//
+// It returns how many variables are filled. Zero if error.
+//
+// Say we have a pattern /user/*/*
+//
+//    var uidStr, action string
+//    if FillPathVariable(request.Context(), &uidStr, &action) < 0 {
+//            log.Fatalf("unknown user or action")
+//    }
+func FillPathVariable(c context.Context, vars ...*string) int {
+	data, ok := GetPathVariable(c)
+	if !ok {
+		return 0
+	}
+
+	min := len(data)
+	if l := len(vars); l < min {
+		min = l
+	}
+
+	for i := 0; i < min; i++ {
+		v := vars[i]
+		*v = data[i]
+	}
+
+	return min
 }
 
 // pathNode is an element in mapping tree, dispatching by path

@@ -1,6 +1,7 @@
 package router
 
 import (
+	"context"
 	"fmt"
 	"reflect"
 	"testing"
@@ -265,4 +266,41 @@ func TestPathMuxMatching(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestFillPathVars(t *testing.T) {
+	t.Run("Valid", func(t *testing.T) {
+		c := context.WithValue(context.Background(), PathVarKey, []string{"a", "b"})
+		var a, b string
+
+		cnt := FillPathVariable(c, &a, &b)
+
+		if cnt != 2 {
+			t.Errorf("expected to fill 2 vars, got %d", cnt)
+		}
+
+		if a != "a" {
+			t.Errorf("expected a to be 'a', got '%s'", a)
+		}
+
+		if b != "b" {
+			t.Errorf("expected b to be 'b', got '%s'", b)
+		}
+	})
+
+	t.Run("NoData", func(t *testing.T) {
+		c := context.WithValue(context.Background(), "ToT", []string{"a", "b"})
+		var a, b string
+
+		cnt := FillPathVariable(c, &a, &b)
+
+		if cnt != 0 {
+			t.Errorf(
+				"expected to fail filling, got %d with '%s' and '%s'",
+				cnt,
+				a,
+				b,
+			)
+		}
+	})
 }
