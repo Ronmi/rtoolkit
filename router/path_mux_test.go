@@ -268,6 +268,20 @@ func TestPathMuxMatching(t *testing.T) {
 	}
 }
 
+func TestPathMuxCustomWildcard(t *testing.T) {
+	m := ByPath()
+	m.Wildcard = "wild"
+	m.HandleFunc("/a/wild/b", h)
+	req := makeReq("http://localhost/a/c/b")
+	_, data, found := m.mappings.match(req)
+	if !found {
+		t.Fatal("expected to match, but not")
+	}
+	if !reflect.DeepEqual(data, []string{"c"}) {
+		t.Fatalf(`expected to get ["c"], got %#v`, data)
+	}
+}
+
 func TestFillPathVars(t *testing.T) {
 	t.Run("Valid", func(t *testing.T) {
 		c := context.WithValue(context.Background(), PathVarKey, []string{"a", "b"})
