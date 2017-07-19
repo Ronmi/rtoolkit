@@ -35,18 +35,26 @@ func (n *pathNode) doMatch(arr []string) (h http.Handler, found bool) {
 
 	cur := arr[0]
 	if next, ok := n.child[cur]; ok {
-		h, found = next.doMatch(arr[1:])
+		if h, found = next.doMatch(arr[1:]); found {
+			return
+		}
 	}
 
-	if !found && n.catchAll != nil {
-		h, found = n.catchAll.doMatch(arr[1:])
+	if n.catchAll != nil {
+		if h, found = n.catchAll.doMatch(arr[1:]); found {
+			return
+		}
+	}
+
+	if next, ok := n.child[""]; ok {
+		return next.h, true
 	}
 
 	return
 }
 
 func (n *pathNode) register(wild, pattern string, h http.Handler) {
-	arr := strings.Split(strings.Trim(pattern, "/"), "/")
+	arr := strings.Split(strings.TrimLeft(pattern, "/"), "/")
 	n.doRegister(wild, arr, h)
 }
 
@@ -57,6 +65,12 @@ func (n *pathNode) doRegister(wild string, arr []string, h http.Handler) {
 	}
 
 	cur := arr[0]
+	if strings.Index(cur, wild) != -1 && cur != wild {
+		panic("router: wildcard cannot use with others")
+	}
+	if len(arr) != 1 && cur == "" {
+		panic("router: pattern cannot have empty string")
+	}
 	if cur == wild {
 		if n.catchAll == nil {
 			n.catchAll = createPathNode()
