@@ -23,7 +23,7 @@ func makeReq(uri string) *http.Request {
 		ProtoMinor:    0,
 		Body:          i,
 		ContentLength: 0,
-		Host:          u.Hostname(),
+		Host:          u.Host,
 		RemoteAddr:    "127.0.0.1:12345",
 		RequestURI:    uri,
 	}
