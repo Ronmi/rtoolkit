@@ -8,7 +8,6 @@ import "context"
 //
 //    - It will not interrupt current loop.
 //    - It will not wait any second between tasks.
-//    - It will stop if task() returns non-nil.
 func InfiniteLoop(task func() error) (cancel context.CancelFunc, err chan error) {
 	ctx, cancel := context.WithCancel(context.Background())
 	err = make(chan error)
@@ -29,4 +28,18 @@ func doInfiniteLooping(ctx context.Context, errchan chan error, task func() erro
 	}
 
 	errchan <- err
+	close(errchan)
+}
+
+// HookedInfiniteLoop is identical with InfiniteLoop, excepts it uses callback instead of channel
+func HookedInfiniteLoop(task func() error, cb func(error)) (cancel context.CancelFunc) {
+	cancel, errchan := InfiniteLoop(task)
+
+	go func() {
+		if cb != nil {
+			cb(<-errchan)
+		}
+	}()
+
+	return cancel
 }
