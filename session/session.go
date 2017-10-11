@@ -17,6 +17,7 @@ func DefaultCookieMaker(name, value string, ttl int) *http.Cookie {
 	ret := &http.Cookie{
 		Name:     name,
 		Value:    value,
+		Path:     "/",
 		Expires:  time.Now().Add(time.Duration(ttl) * time.Second),
 		MaxAge:   ttl,
 		HttpOnly: true,
@@ -58,7 +59,7 @@ func (m *Manager) init() {
 	}
 
 	if m.ChecksumKey == "" {
-		m.Key = "SESSION_CHECK"
+		m.ChecksumKey = "SESSION_CHECK"
 	}
 
 	if m.Store == nil {
@@ -86,13 +87,24 @@ func (m *Manager) Start(w http.ResponseWriter, r *http.Request) (sess *Session, 
 		return newSession(m, w)
 	}
 
-	seed, err := r.Cookie(m.Key)
+	seed, err := r.Cookie(m.ChecksumKey)
 
 	if err != nil || seed.Value == "" {
 		return newSession(m, w)
 	}
 
-	return loadSession(sid.Value, seed.Value, m, w)
+	sess, err = loadSession(sid.Value, seed.Value, m, w)
+	if err != nil {
+		return newSession(m, w)
+	}
+
+	return
+}
+
+// New forces create a new session
+func (m *Manager) New(w http.ResponseWriter) (sess *Session, err error) {
+	m.init()
+	return newSession(m, w)
 }
 
 // Session represents session for a specific client
@@ -117,6 +129,7 @@ func newSession(m *Manager, w http.ResponseWriter) (*Session, error) {
 		seed: seed,
 		m:    m,
 	}
+	defer s.Save(w)
 
 	// session id
 	c := m.MakeCookie(s.m.Key, s.id, s.m.TTL)
@@ -182,6 +195,8 @@ func (s *Session) Save(w http.ResponseWriter) error {
 	err := s.m.Store.Set(s.id, s.seed, s.data)
 	if err == nil {
 		c := s.m.MakeCookie(s.m.Key, s.id, s.m.TTL)
+		http.SetCookie(w, c)
+		c = s.m.MakeCookie(s.m.ChecksumKey, s.seed, s.m.TTL)
 		http.SetCookie(w, c)
 		s.saved = true
 	}
