@@ -115,6 +115,7 @@ type Handler func(dec *json.Decoder, r *http.Request, w http.ResponseWriter) (in
 
 // ServeHTTP implements net/http.Handler
 func (h Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
 	dec := json.NewDecoder(r.Body)
 	enc := json.NewEncoder(w)
 	res, err := h(dec, r, w)
