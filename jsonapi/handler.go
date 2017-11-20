@@ -148,21 +148,3 @@ func (h Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	resp["errors"] = []*errObj{&errObj{Detail: err.Error()}}
 	enc.Encode(resp)
 }
-
-// API denotes how a json api handler registers to a servemux
-type API struct {
-	Pattern string
-	Handler func(dec *json.Decoder, r *http.Request, w http.ResponseWriter) (interface{}, error)
-}
-
-// Register helps you to register many APIHandlers to a http.ServeMux
-func Register(apis []API, mux *http.ServeMux) {
-	reg := http.Handle
-	if mux != nil {
-		reg = mux.Handle
-	}
-
-	for _, api := range apis {
-		reg(api.Pattern, Handler(api.Handler))
-	}
-}
