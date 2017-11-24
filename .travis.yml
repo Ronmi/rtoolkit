@@ -1,5 +1,8 @@
 language: go
 
+before_install:
+  - mysql -e 'CREATE DATABASE IF NOT EXISTS test;'
+
 go:
   - 1.7
   - 1.8
