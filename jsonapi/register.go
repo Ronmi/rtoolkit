@@ -38,15 +38,10 @@ func init() {
 	)
 }
 
-func findMatchedMethods(handlers interface{}) map[string]func(dec *json.Decoder, r *http.Request, w http.ResponseWriter) (interface{}, error) {
-
-	ret := make(
-		map[string]func(
-			dec *json.Decoder, r *http.Request, w http.ResponseWriter,
-		) (interface{}, error),
-	)
-
+func findMatchedMethods(prefix string, handlers interface{}) []API {
 	v := reflect.ValueOf(handlers)
+
+	ret := make([]API, 0, v.NumMethod())
 
 	for x, t := 0, v.Type(); x < v.NumMethod(); x++ {
 		h, ok := v.Method(x).Interface().(func(dec *json.Decoder, r *http.Request, w http.ResponseWriter) (interface{}, error))
@@ -55,7 +50,10 @@ func findMatchedMethods(handlers interface{}) map[string]func(dec *json.Decoder,
 			continue
 		}
 
-		ret[convertCamelTo_(t.Method(x).Name)] = h
+		ret = append(ret, API{
+			Pattern: prefix + "/" + convertCamelTo_(t.Method(x).Name),
+			Handler: h,
+		})
 	}
 
 	return ret
@@ -70,10 +68,7 @@ func findMatchedMethods(handlers interface{}) map[string]func(dec *json.Decoder,
 // underscore_pattern then add prefix and "/" before it. Take a look at
 // the test cases as example.
 func RegisterAll(mux *http.ServeMux, prefix string, handlers interface{}) {
-	methods := findMatchedMethods(handlers)
-	for pattern, h := range methods {
-		mux.Handle(prefix+"/"+pattern, Handler(h))
-	}
+	Register(findMatchedMethods(prefix, handlers), mux)
 }
 
 func convertCamelTo_(name string) string {
