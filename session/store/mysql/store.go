@@ -45,6 +45,14 @@ func NewStore(db *sql.DB, table, sessID, seed, data, ttl, expire string) store.S
 		conn:   db,
 		lastgc: time.Now().Unix(),
 	}
+	p := func(qstr string) *sql.Stmt {
+		ret, err := db.Prepare(qstr)
+		if err != nil {
+			panic(err)
+		}
+
+		return ret
+	}
 
 	qstr := fmt.Sprintf(
 		"SELECT `%s`,`%s` FROM `%s` WHERE `%s`=?",
@@ -53,7 +61,7 @@ func NewStore(db *sql.DB, table, sessID, seed, data, ttl, expire string) store.S
 		table,
 		sessID,
 	)
-	ret.stmtGet, _ = db.Prepare(qstr)
+	ret.stmtGet = p(qstr)
 
 	qstr = fmt.Sprintf(
 		"INSERT INTO `%s` (`%s`,`%s`,`%s`,`%s`,`%s`) VALUES (?,?,?,?,NOW()) ON DUPLICATE KEY UPDATE `%s`=VALUES(`%s`),`%s`=VALUES(`%s`),`%s`=VALUES(`%s`),`%s`=NOW()",
@@ -68,7 +76,7 @@ func NewStore(db *sql.DB, table, sessID, seed, data, ttl, expire string) store.S
 		ttl, ttl,
 		expire,
 	)
-	ret.stmtPut, _ = db.Prepare(qstr)
+	ret.stmtPut = p(qstr)
 
 	qstr = fmt.Sprintf(
 		"UPDATE `%s` SET `%s`=?, `%s`=DATE_ADD(NOW(), INTERVAL `%s` SECOND) WHERE `%s`=? LIMIT 1",
@@ -78,14 +86,14 @@ func NewStore(db *sql.DB, table, sessID, seed, data, ttl, expire string) store.S
 		ttl,
 		sessID,
 	)
-	ret.stmtTTL, _ = db.Prepare(qstr)
+	ret.stmtTTL = p(qstr)
 
 	qstr = fmt.Sprintf(
 		"DELETE FROM `%s` WHERE `%s`=?",
 		table,
 		sessID,
 	)
-	ret.stmtCLR, _ = db.Prepare(qstr)
+	ret.stmtCLR = p(qstr)
 
 	qstr = fmt.Sprintf(
 		"INSERT INTO `%s` (`%s`,`%s`,`%s`,`%s`,`%s`) VALUES (?,?,'',?,DATE_ADD(NOW(), INTERVAL `%s` SECOND))",
@@ -97,14 +105,14 @@ func NewStore(db *sql.DB, table, sessID, seed, data, ttl, expire string) store.S
 		expire,
 		ttl,
 	)
-	ret.stmtNEW, _ = db.Prepare(qstr)
+	ret.stmtNEW = p(qstr)
 
 	qstr = fmt.Sprintf(
 		"DELETE FROM `%s` WHERE NOW() > `%s`",
 		table,
 		expire,
 	)
-	ret.stmtGC, _ = db.Prepare(qstr)
+	ret.stmtGC = p(qstr)
 	return ret
 }
 
