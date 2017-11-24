@@ -16,9 +16,16 @@ type errObj struct {
 // Error represents an error status of the HTTP request. Used with APIHandler.
 type Error struct {
 	Code     int
+	Origin   error // prepared for application errors
 	message  string
 	location string // url for 3xx redirect
 	errCode  string
+}
+
+// SetOrigin creates a new Error instance to preserve original error
+func (h Error) SetOrigin(err error) Error {
+	h.Origin = err
+	return h
 }
 
 // SetData creates a new Error instance and set the error message or url according to the error code
