@@ -1,6 +1,12 @@
 package jsonapi
 
-import "testing"
+import (
+	"bytes"
+	"encoding/json"
+	"net/http"
+	"net/http/httptest"
+	"testing"
+)
 
 func TestCamelConverting(t *testing.T) {
 	// [method name, expect]
@@ -18,5 +24,57 @@ func TestCamelConverting(t *testing.T) {
 				t.Fatalf("expected %s, got %s", c[1], actual)
 			}
 		})
+	}
+}
+
+func TestRegisterOrder(t *testing.T) {
+	buf := &bytes.Buffer{}
+
+	m1 := func(h Handler) Handler {
+		return Handler(func(
+			d *json.Decoder,
+			r *http.Request,
+			w http.ResponseWriter,
+		) (interface{}, error) {
+			buf.WriteByte('1')
+			data, err := h(d, r, w)
+			buf.WriteByte('1')
+			return data, err
+		})
+	}
+	m2 := func(h Handler) Handler {
+		return Handler(func(
+			d *json.Decoder,
+			r *http.Request,
+			w http.ResponseWriter,
+		) (interface{}, error) {
+			buf.WriteByte('2')
+			data, err := h(d, r, w)
+			buf.WriteByte('2')
+			return data, err
+		})
+	}
+
+	h := func(
+		d *json.Decoder,
+		r *http.Request,
+		w http.ResponseWriter,
+	) (interface{}, error) {
+		buf.WriteByte('3')
+		return nil, nil
+	}
+
+	apis := []API{
+		{Pattern: "/api", Handler: h},
+	}
+
+	mux := http.NewServeMux()
+	With(m1).With(m2).Register(apis, mux)
+	req := httptest.NewRequest("GET", "http://localhost/api", nil)
+	handler, _ := mux.Handler(req)
+	handler.ServeHTTP(httptest.NewRecorder(), req)
+
+	if actual := buf.String(); actual != "12321" {
+		t.Fatalf("expected 12321, got %s", actual)
 	}
 }
