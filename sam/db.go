@@ -17,7 +17,7 @@ func (s *SAM) Load(db *sql.DB, name string) int {
 	qstr := fmt.Sprintf(`SELECT %s FROM %s WHERE %s = ?`, state, table, app)
 	row := db.QueryRow(qstr, name)
 
-	var cur int
+	cur := -1
 	if err := row.Scan(&cur); err != nil {
 		cur = -1
 	}
@@ -34,7 +34,7 @@ func (s *SAM) Save(db *sql.DB, name string, cur int) error {
 	table, app, state := s.schema()
 
 	ins := fmt.Sprintf(`INSERT INTO %s (%s,%s) VALUES (?,?)`, table, state, app)
-	upd := fmt.Sprintf(`UPDATE TABLE %s SET %s=? WHERE %s=?`, table, state, app)
+	upd := fmt.Sprintf(`UPDATE %s SET %s=? WHERE %s=?`, table, state, app)
 
 	if _, err := db.Exec(ins, cur, name); err == nil {
 		return nil
