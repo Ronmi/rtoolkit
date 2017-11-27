@@ -1,4 +1,4 @@
-package apilog
+package apitool
 
 import (
 	"encoding/json"
@@ -11,7 +11,7 @@ import (
 type LogProvider func(r *http.Request, data interface{}, err error)
 
 // Use wraps handler, uses LogProvider p for logging purpose
-func Use(p LogProvider) jsonapi.Middleware {
+func LogIn(p LogProvider) jsonapi.Middleware {
 	return jsonapi.Middleware(func(h jsonapi.Handler) jsonapi.Handler {
 		return jsonapi.Handler(func(
 			d *json.Decoder,
@@ -27,7 +27,7 @@ func Use(p LogProvider) jsonapi.Middleware {
 }
 
 // LogErr wraps handler, uses LogProvider p for logging purpose, but only for errors
-func LogErr(p LogProvider) jsonapi.Middleware {
+func LogErrIn(p LogProvider) jsonapi.Middleware {
 	return jsonapi.Middleware(func(h jsonapi.Handler) jsonapi.Handler {
 		return jsonapi.Handler(func(
 			d *json.Decoder,

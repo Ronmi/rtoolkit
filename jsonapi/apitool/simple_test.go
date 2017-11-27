@@ -1,4 +1,4 @@
-package apilog
+package apitool
 
 import (
 	"bytes"
@@ -30,7 +30,7 @@ func TestSimpleLogger(t *testing.T) {
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
 			buf := &bytes.Buffer{}
-			p := Simple(log.New(buf, "", 0))
+			p := SimpleFormat(log.New(buf, "", 0))
 
 			p(nil, nil, c.e)
 
