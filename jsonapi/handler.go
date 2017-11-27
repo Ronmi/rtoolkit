@@ -22,6 +22,16 @@ type Error struct {
 	errCode  string
 }
 
+// Data retrieves user defined error message
+func (h Error) Data() string {
+	return h.message
+}
+
+// ErrCode retrieves user defined error code
+func (h Error) ErrCode() string {
+	return h.errCode
+}
+
 // SetOrigin creates a new Error instance to preserve original error
 func (h Error) SetOrigin(err error) Error {
 	h.Origin = err
