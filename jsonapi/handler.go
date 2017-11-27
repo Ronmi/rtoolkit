@@ -38,6 +38,24 @@ func (h Error) SetOrigin(err error) Error {
 	return h
 }
 
+// EqualTo tells if two Error instances represents same kind of error
+//
+// It compares all fields no matter exported or not, excepts Origin
+func (h Error) EqualTo(e Error) bool {
+	switch {
+	case e.errCode != h.errCode:
+		return false
+	case e.message != h.message:
+		return false
+	case e.location != h.location:
+		return false
+	case e.Code != h.Code:
+		return false
+	}
+
+	return true
+}
+
 // SetData creates a new Error instance and set the error message or url according to the error code
 func (h Error) SetData(data string) Error {
 	if h.Code >= 301 && h.Code <= 303 {
