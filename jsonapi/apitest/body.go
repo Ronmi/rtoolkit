@@ -17,10 +17,44 @@ func NewRequest(method, target string, data interface{}) *http.Request {
 	return httptest.NewRequest(method, target, bytes.NewReader(buf))
 }
 
+// Modify creates a middleware that do some magic before running handler
+func Modify(f func(*http.Request, http.ResponseWriter) (*http.Request, http.ResponseWriter)) jsonapi.Middleware {
+	return func(h jsonapi.Handler) jsonapi.Handler {
+		return func(
+			d *json.Decoder,
+			r *http.Request,
+			w http.ResponseWriter,
+		) (interface{}, error) {
+			x, y := f(r, w)
+			return h(d, x, y)
+		}
+	}
+}
+
+// Monitor creates a middleware that do some magic before running handler
+func Monitor(f func(*http.Request, http.ResponseWriter)) jsonapi.Middleware {
+	return func(h jsonapi.Handler) jsonapi.Handler {
+		return func(
+			d *json.Decoder,
+			r *http.Request,
+			w http.ResponseWriter,
+		) (interface{}, error) {
+			data, err := h(d, r, w)
+			f(r, w)
+			return data, err
+		}
+	}
+}
+
 // Test wraps your handler for test purpose
 type Test jsonapi.Handler
 
 // With creates new Test instance by wrapping the handler with the middleware
+//
+// It executes in REVERSE ORDER:
+//
+//     // order: m2 > m1 > h > m1 > m2
+//     Test(h).With(m1).With(m2).Use(data)
 func (t Test) With(m jsonapi.Middleware) Test {
 	return Test(m(jsonapi.Handler(t)))
 }
