@@ -79,6 +79,19 @@ func (h Error) Error() string {
 		ret += ": " + h.message
 	}
 
+	if h.location != "" {
+		ret += ": " + h.location
+	}
+
+	return ret
+}
+
+func (h Error) String() string {
+	ret := h.Error()
+	if h.Origin != nil {
+		ret += ": " + h.Origin.Error()
+	}
+
 	return ret
 }
 
