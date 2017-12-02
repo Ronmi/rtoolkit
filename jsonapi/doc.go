@@ -34,9 +34,9 @@ And this is how we do in main function:
     http.Handle("/api/hello", jsonapi.Handler(HelloHandler))
 
     // Batch processing
-    jsonapi.Register([]jsonapi.API{
+    jsonapi.Register(myServerMux, []jsonapi.API{
             {"/api/hello", HelloHandler},
-    }, myServerMux)
+    })
 
 */
 package jsonapi

@@ -69,7 +69,7 @@ func TestRegisterOrder(t *testing.T) {
 	}
 
 	mux := http.NewServeMux()
-	With(m1).With(m2).Register(apis, mux)
+	With(m1).With(m2).Register(mux, apis)
 	req := httptest.NewRequest("GET", "http://localhost/api", nil)
 	handler, _ := mux.Handler(req)
 	handler.ServeHTTP(httptest.NewRecorder(), req)

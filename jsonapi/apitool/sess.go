@@ -11,8 +11,12 @@ import (
 
 // Session creates a api middleware that handles session related functions
 //
-// If you are facing "Trailer Header" with original session middleware,
+// If you are facing "Trailer Header" problem with original session middleware,
 // this should be helpful.
+//
+//     jsonapi.With(
+//         apitool.Session(mySessMgr),
+//     ).RegisterAll(myHandlerClass)
 func Session(m *session.Manager) jsonapi.Middleware {
 	return func(h jsonapi.Handler) jsonapi.Handler {
 		return func(

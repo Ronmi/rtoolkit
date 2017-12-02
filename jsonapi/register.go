@@ -15,7 +15,7 @@ type API struct {
 }
 
 // Register helps you to register many APIHandlers to a http.ServeMux
-func Register(apis []API, mux *http.ServeMux) {
+func Register(mux *http.ServeMux, apis []API) {
 	reg := http.Handle
 	if mux != nil {
 		reg = mux.Handle
@@ -68,7 +68,7 @@ func findMatchedMethods(prefix string, handlers interface{}) []API {
 // underscore_pattern then add prefix and "/" before it. Take a look at
 // the test cases as example.
 func RegisterAll(mux *http.ServeMux, prefix string, handlers interface{}) {
-	Register(findMatchedMethods(prefix, handlers), mux)
+	Register(mux, findMatchedMethods(prefix, handlers))
 }
 
 func convertCamelTo_(name string) string {

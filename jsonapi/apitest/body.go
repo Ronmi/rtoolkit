@@ -1,3 +1,4 @@
+// Package apitest provides few tools helping you write tests
 package apitest
 
 import (
@@ -31,7 +32,7 @@ func Modify(f func(*http.Request, http.ResponseWriter) (*http.Request, http.Resp
 	}
 }
 
-// Monitor creates a middleware that do some magic before running handler
+// Monitor creates a middleware that do some magic after running handler
 func Monitor(f func(*http.Request, http.ResponseWriter)) jsonapi.Middleware {
 	return func(h jsonapi.Handler) jsonapi.Handler {
 		return func(
