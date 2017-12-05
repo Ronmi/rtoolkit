@@ -1,7 +1,5 @@
 package jsonapi
 
-import "net/http"
-
 // Middleware is a wrapper for handler
 type Middleware func(Handler) Handler
 
@@ -22,8 +20,8 @@ type Middleware func(Handler) Handler
 //     3. Logging middleware
 //     4. myHandler
 type Registerer interface {
-	Register(mux *http.ServeMux, apis []API)
-	RegisterAll(mux *http.ServeMux, prefix string, handlers interface{})
+	Register(mux Mux, apis []API)
+	RegisterAll(mux Mux, prefix string, handlers interface{})
 	With(m Middleware) Registerer
 }
 
@@ -40,21 +38,21 @@ type registerer struct {
 }
 
 // Register is identical to jsonapi.Register(), but wraps api in middleware chain first
-func (r *registerer) Register(mux *http.ServeMux, apis []API) {
+func (r *registerer) Register(mux Mux, apis []API) {
+	reg := Register
+	if r.parent != nil {
+		reg = r.parent.Register
+	}
+
 	for x, a := range apis {
 		apis[x].Handler = r.m(a.Handler)
 	}
 
-	if r.parent != nil {
-		r.parent.Register(mux, apis)
-		return
-	}
-
-	Register(mux, apis)
+	reg(mux, apis)
 }
 
 // RegisterAll is identical to jsonapi.RegisterAll(), but wraps api in middleware chain first
-func (r *registerer) RegisterAll(mux *http.ServeMux, prefix string, handlers interface{}) {
+func (r *registerer) RegisterAll(mux Mux, prefix string, handlers interface{}) {
 	r.Register(mux, findMatchedMethods(prefix, handlers))
 }
 
