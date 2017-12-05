@@ -170,11 +170,15 @@ func (h Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	resp := make(map[string]interface{})
 	if err == nil {
 		resp["data"] = res
-		if err := enc.Encode(resp); err != nil {
-			w.WriteHeader(http.StatusInternalServerError)
-			w.Write([]byte(`"Cannot encode response into JSON format, please contact the administrator."`))
+		e := enc.Encode(resp)
+		if e == nil {
+			return
 		}
-		return
+		delete(resp, "data")
+
+		err = E500.SetOrigin(e).SetData(
+			`Failed to marshal data`,
+		)
 	}
 
 	code := http.StatusInternalServerError
