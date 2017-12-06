@@ -20,8 +20,8 @@ type Middleware func(Handler) Handler
 //     3. Logging middleware
 //     4. myHandler
 type Registerer interface {
-	Register(mux Mux, apis []API)
-	RegisterAll(mux Mux, prefix string, handlers interface{})
+	Register(mux HTTPMux, apis []API)
+	RegisterAll(mux HTTPMux, prefix string, handlers interface{})
 	With(m Middleware) Registerer
 }
 
@@ -38,7 +38,7 @@ type registerer struct {
 }
 
 // Register is identical to jsonapi.Register(), but wraps api in middleware chain first
-func (r *registerer) Register(mux Mux, apis []API) {
+func (r *registerer) Register(mux HTTPMux, apis []API) {
 	reg := Register
 	if r.parent != nil {
 		reg = r.parent.Register
@@ -52,7 +52,7 @@ func (r *registerer) Register(mux Mux, apis []API) {
 }
 
 // RegisterAll is identical to jsonapi.RegisterAll(), but wraps api in middleware chain first
-func (r *registerer) RegisterAll(mux Mux, prefix string, handlers interface{}) {
+func (r *registerer) RegisterAll(mux HTTPMux, prefix string, handlers interface{}) {
 	r.Register(mux, findMatchedMethods(prefix, handlers))
 }
 
