@@ -96,7 +96,7 @@ func (s *SAM) schema() (table, app, state string) {
 //     }
 //
 // The whole execution is wrapped in transaction, ensuring all-or-nothing behavier.
-func (s *SAM) Execute(db *sql.DB, root, appName string, state int) (int, error) {
+func (s *SAM) Execute(db *sql.DB, root string, state int) (int, error) {
 	files := sqlFiles(s.walker(), root, state)
 	if len(files) == 0 {
 		return state, nil
