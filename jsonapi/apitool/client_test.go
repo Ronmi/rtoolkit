@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"net/http/httptest"
 
 	"github.com/Ronmi/rtoolkit/jsonapi"
 )
@@ -42,12 +43,9 @@ func Greeting(
 }
 
 // RunAPIServer creates and runs an API server at :9527
-func RunAPIServer() *http.Server {
+func RunAPIServer() *httptest.Server {
 	http.Handle("/greeting", jsonapi.Handler(Greeting))
-	server := &http.Server{Addr: ":9527"}
-	go server.ListenAndServe()
-
-	return server
+	return httptest.NewServer(http.DefaultServeMux)
 }
 
 func ExampleClient() {
@@ -55,12 +53,12 @@ func ExampleClient() {
 	server := RunAPIServer()
 	defer server.Close()
 
-	client := Call("POST", "http://localhost:9527/greeting", nil)
+	client := Call("POST", server.URL+"/greeting", server.Client())
 
 	var resp RespGreeting
 	err := client.Exec(ParamGreeting{Name: "John", Surname: "Doe"}, &resp)
 	if err != nil {
-		fmt.Println(err)
+		fmt.Println(err.(jsonapi.Error).String())
 		return
 	}
 
