@@ -53,7 +53,7 @@ func ExampleClient() {
 	server := RunAPIServer()
 	defer server.Close()
 
-	client := Call("POST", server.URL+"/greeting", server.Client())
+	client := Call("POST", server.URL+"/greeting", nil)
 
 	var resp RespGreeting
 	err := client.Exec(ParamGreeting{Name: "John", Surname: "Doe"}, &resp)
