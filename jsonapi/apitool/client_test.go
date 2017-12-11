@@ -42,7 +42,7 @@ func Greeting(
 	}, nil
 }
 
-// RunAPIServer creates and runs an API server at :9527
+// RunAPIServer creates and runs an API server
 func RunAPIServer() *httptest.Server {
 	http.Handle("/greeting", jsonapi.Handler(Greeting))
 	return httptest.NewServer(http.DefaultServeMux)
@@ -63,9 +63,9 @@ func ExampleClient() {
 	}
 
 	fmt.Printf(
-		"Are we greeted to %s %s? %v",
+		"Have we greeted to %s %s? %v",
 		resp.Name, resp.Surname, resp.Greeted,
 	)
 
-	// output: Are we greeted to John Doe? true
+	// output: Have we greeted to John Doe? true
 }
