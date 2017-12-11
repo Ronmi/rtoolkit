@@ -1,4 +1,5 @@
 language: go
+sudo: false
 
 before_install:
   - mysql -e 'CREATE DATABASE IF NOT EXISTS test;'
