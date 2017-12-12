@@ -58,7 +58,7 @@ func ExampleClient() {
 	var resp RespGreeting
 	err := client.Exec(ParamGreeting{Name: "John", Surname: "Doe"}, &resp)
 	if err != nil {
-		fmt.Println(err.(jsonapi.Error).String())
+		fmt.Println(err)
 		return
 	}
 

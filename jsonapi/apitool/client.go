@@ -11,15 +11,24 @@ import (
 	"github.com/Ronmi/rtoolkit/jsonapi"
 )
 
+// EClient indicates something goes wrong at client side while calling remote jsonapi
+var EClient = jsonapi.Error{Code: -1}.SetData("Client error")
+
 // Client is a helper to simplify the process of calling jsonapi
 //
 // Any error during the call process will immediately return as
 // jsonapi.InternalError.SetOrigin(the_error)
 type Client interface {
 	// Synchronized call
+	//
+	// If any io error or json decoding error occured, an
+	// EClient.SetOrigin(the_error) returns.
 	Exec(param, result interface{}) error
-	// Asynchronized call, client take response to close the channel
-	// result is guaranteed to be filled before error returns.
+	// Asynchronized call, Client take response to close the channel
+	// result is guaranteed to be filled when error returns.
+	//
+	// If any io error or json decoding error occured, an
+	// EClient.SetOrigin(the_error) returns.
 	Do(param, result interface{}) chan error
 }
 
@@ -52,16 +61,16 @@ type callResp struct {
 // It's caller's response to close response body.
 //
 // If any io error or json decoding error occured, an
-// jsonapi.InternalError.SetOrigin(the_error) returns.
+// EClient.SetOrigin(the_error) returns.
 func ParseResponse(resp *http.Response, result interface{}) error {
 	var res callResp
 	if err := json.NewDecoder(resp.Body).Decode(&res); err != nil {
-		return jsonapi.InternalError.SetOrigin(err)
+		return EClient.SetOrigin(err)
 	}
 
 	if d := res.Data; d != nil {
 		if err := json.Unmarshal([]byte(*d), result); err != nil {
-			return jsonapi.InternalError.SetOrigin(err)
+			return EClient.SetOrigin(err)
 		}
 	}
 
@@ -84,12 +93,12 @@ func Call(method, uri string, client *http.Client) Client {
 	return clientFunc(func(param, result interface{}) error {
 		data, err := json.Marshal(param)
 		if err != nil {
-			return jsonapi.InternalError.SetOrigin(err)
+			return EClient.SetOrigin(err)
 		}
 
 		req, err := http.NewRequest(method, uri, bytes.NewReader(data))
 		if err != nil {
-			return jsonapi.InternalError.SetOrigin(err)
+			return EClient.SetOrigin(err)
 		}
 		ctx, cancel := context.WithCancel(context.Background())
 		req = req.WithContext(ctx)
@@ -97,7 +106,7 @@ func Call(method, uri string, client *http.Client) Client {
 		resp, err := c.Do(req)
 		if err != nil {
 			cancel()
-			return jsonapi.InternalError.SetOrigin(err)
+			return EClient.SetOrigin(err)
 		}
 		defer resp.Body.Close()
 		defer io.Copy(ioutil.Discard, resp.Body)

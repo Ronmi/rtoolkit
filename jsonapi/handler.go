@@ -128,29 +128,29 @@ func fromError(e *Error) *ErrObj {
 //
 //     return nil, errors.New("internal server error")
 var (
-	InternalError = Error{Code: 0, message: "Internal error"}
-	E301          = Error{Code: 301, message: "Resource has been moved permanently"}
-	E302          = Error{Code: 302, message: "Resource has been found at another location"}
-	E303          = Error{Code: 303, message: "See other"}
-	E304          = Error{Code: 304, message: "Not modified"}
-	E307          = Error{Code: 307, message: "Resource has been moved to another location temporarily"}
-	E400          = Error{Code: 400, message: "Error parsing request"}
-	E401          = Error{Code: 401, message: "You have to be authorized before accessing this resource"}
-	E403          = Error{Code: 403, message: "You have no right to access this resource"}
-	E404          = Error{Code: 404, message: "Resource not found"}
-	E408          = Error{Code: 408, message: "Request timeout"}
-	E409          = Error{Code: 409, message: "Conflict"}
-	E410          = Error{Code: 410, message: "Gone"}
-	E413          = Error{Code: 413, message: "Request entity too large"}
-	E415          = Error{Code: 415, message: "Unsupported media type"}
-	E418          = Error{Code: 418, message: "I'm a teapot"}
-	E426          = Error{Code: 426, message: "Upgrade required"}
-	E429          = Error{Code: 429, message: "Too many requests"}
-	E500          = Error{Code: 500, message: "Internal server error"}
-	E501          = Error{Code: 501, message: "Not implemented"}
-	E502          = Error{Code: 502, message: "Bad gateway"}
-	E503          = Error{Code: 503, message: "Service unavailable"}
-	E504          = Error{Code: 504, message: "Gateway timeout"}
+	EUnknown = Error{Code: 0, message: "Unknown error"}
+	E301     = Error{Code: 301, message: "Resource has been moved permanently"}
+	E302     = Error{Code: 302, message: "Resource has been found at another location"}
+	E303     = Error{Code: 303, message: "See other"}
+	E304     = Error{Code: 304, message: "Not modified"}
+	E307     = Error{Code: 307, message: "Resource has been moved to another location temporarily"}
+	E400     = Error{Code: 400, message: "Error parsing request"}
+	E401     = Error{Code: 401, message: "You have to be authorized before accessing this resource"}
+	E403     = Error{Code: 403, message: "You have no right to access this resource"}
+	E404     = Error{Code: 404, message: "Resource not found"}
+	E408     = Error{Code: 408, message: "Request timeout"}
+	E409     = Error{Code: 409, message: "Conflict"}
+	E410     = Error{Code: 410, message: "Gone"}
+	E413     = Error{Code: 413, message: "Request entity too large"}
+	E415     = Error{Code: 415, message: "Unsupported media type"}
+	E418     = Error{Code: 418, message: "I'm a teapot"}
+	E426     = Error{Code: 426, message: "Upgrade required"}
+	E429     = Error{Code: 429, message: "Too many requests"}
+	E500     = Error{Code: 500, message: "Internal server error"}
+	E501     = Error{Code: 501, message: "Not implemented"}
+	E502     = Error{Code: 502, message: "Bad gateway"}
+	E503     = Error{Code: 503, message: "Service unavailable"}
+	E504     = Error{Code: 504, message: "Gateway timeout"}
 
 	// application-defined error
 	APPERR = Error{Code: 200}
