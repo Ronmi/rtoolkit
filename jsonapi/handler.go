@@ -177,14 +177,13 @@ var (
 //
 //     - Return {"data": your_data} if error == nil
 //     - Return {"errors": [{"code": application-defined-error-code, "detail": message}]} if error returned
-type Handler func(dec *json.Decoder, r *http.Request, w http.ResponseWriter) (interface{}, error)
+type Handler func(r Request) (interface{}, error)
 
 // ServeHTTP implements net/http.Handler
 func (h Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
-	dec := json.NewDecoder(r.Body)
 	enc := json.NewEncoder(w)
-	res, err := h(dec, r, w)
+	res, err := h(FromHTTP(w, r))
 	resp := make(map[string]interface{})
 	if err == nil {
 		resp["data"] = res

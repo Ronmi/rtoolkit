@@ -2,7 +2,6 @@ package jsonapi
 
 import (
 	"bytes"
-	"encoding/json"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -31,35 +30,23 @@ func TestRegisterOrder(t *testing.T) {
 	buf := &bytes.Buffer{}
 
 	m1 := func(h Handler) Handler {
-		return Handler(func(
-			d *json.Decoder,
-			r *http.Request,
-			w http.ResponseWriter,
-		) (interface{}, error) {
+		return Handler(func(req Request) (interface{}, error) {
 			buf.WriteByte('1')
-			data, err := h(d, r, w)
+			data, err := h(req)
 			buf.WriteByte('1')
 			return data, err
 		})
 	}
 	m2 := func(h Handler) Handler {
-		return Handler(func(
-			d *json.Decoder,
-			r *http.Request,
-			w http.ResponseWriter,
-		) (interface{}, error) {
+		return Handler(func(req Request) (interface{}, error) {
 			buf.WriteByte('2')
-			data, err := h(d, r, w)
+			data, err := h(req)
 			buf.WriteByte('2')
 			return data, err
 		})
 	}
 
-	h := func(
-		d *json.Decoder,
-		r *http.Request,
-		w http.ResponseWriter,
-	) (interface{}, error) {
+	h := func(req Request) (interface{}, error) {
 		buf.WriteByte('3')
 		return nil, nil
 	}

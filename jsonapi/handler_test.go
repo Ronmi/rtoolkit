@@ -1,18 +1,14 @@
 package jsonapi
 
 import (
-	"encoding/json"
 	"errors"
-	"net/http"
 	"net/http/httptest"
 	"testing"
 )
 
 func TestHandler(t *testing.T) {
 	fac := func(data interface{}, err error) Handler {
-		return func(
-			d *json.Decoder, r *http.Request, w http.ResponseWriter,
-		) (interface{}, error) {
+		return func(req Request) (interface{}, error) {
 			return data, err
 		}
 	}
