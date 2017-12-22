@@ -19,29 +19,20 @@ func NewRequest(method, target string, data interface{}) *http.Request {
 }
 
 // Modify creates a middleware that do some magic before running handler
-func Modify(f func(*http.Request, http.ResponseWriter) (*http.Request, http.ResponseWriter)) jsonapi.Middleware {
+func Modify(f func(jsonapi.Request) jsonapi.Request) jsonapi.Middleware {
 	return func(h jsonapi.Handler) jsonapi.Handler {
-		return func(
-			d *json.Decoder,
-			r *http.Request,
-			w http.ResponseWriter,
-		) (interface{}, error) {
-			x, y := f(r, w)
-			return h(d, x, y)
+		return func(r jsonapi.Request) (interface{}, error) {
+			return h(f(r))
 		}
 	}
 }
 
 // Monitor creates a middleware that do some magic after running handler
-func Monitor(f func(*http.Request, http.ResponseWriter)) jsonapi.Middleware {
+func Monitor(f func(jsonapi.Request, interface{}, error)) jsonapi.Middleware {
 	return func(h jsonapi.Handler) jsonapi.Handler {
-		return func(
-			d *json.Decoder,
-			r *http.Request,
-			w http.ResponseWriter,
-		) (interface{}, error) {
-			data, err := h(d, r, w)
-			f(r, w)
+		return func(r jsonapi.Request) (interface{}, error) {
+			data, err := h(r)
+			f(r, data, err)
 			return data, err
 		}
 	}
@@ -65,8 +56,7 @@ func (t Test) UseRequest(req *http.Request) (interface{}, error) {
 	defer req.Body.Close()
 
 	w := httptest.NewRecorder()
-	dec := json.NewDecoder(req.Body)
-	return t(dec, req, w)
+	return t(jsonapi.FromHTTP(w, req))
 }
 
 // Use executes handler with your data

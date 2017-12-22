@@ -1,7 +1,6 @@
 package apitool
 
 import (
-	"encoding/json"
 	"net/http"
 
 	"github.com/Ronmi/rtoolkit/jsonapi"
@@ -17,13 +16,9 @@ type LogProvider func(r *http.Request, data interface{}, err error)
 //      ).RegisterAll(myHandlerClass)
 func LogIn(p LogProvider) jsonapi.Middleware {
 	return jsonapi.Middleware(func(h jsonapi.Handler) jsonapi.Handler {
-		return jsonapi.Handler(func(
-			d *json.Decoder,
-			r *http.Request,
-			w http.ResponseWriter,
-		) (interface{}, error) {
-			data, err := h(d, r, w)
-			p(r, data, err)
+		return jsonapi.Handler(func(req jsonapi.Request) (interface{}, error) {
+			data, err := h(req)
+			p(req.R(), data, err)
 
 			return data, err
 		})
@@ -37,14 +32,10 @@ func LogIn(p LogProvider) jsonapi.Middleware {
 //      ).RegisterAll(myHandlerClass)
 func LogErrIn(p LogProvider) jsonapi.Middleware {
 	return jsonapi.Middleware(func(h jsonapi.Handler) jsonapi.Handler {
-		return jsonapi.Handler(func(
-			d *json.Decoder,
-			r *http.Request,
-			w http.ResponseWriter,
-		) (interface{}, error) {
-			data, err := h(d, r, w)
+		return jsonapi.Handler(func(req jsonapi.Request) (interface{}, error) {
+			data, err := h(req)
 			if err != nil {
-				p(r, data, err)
+				p(req.R(), data, err)
 			}
 
 			return data, err

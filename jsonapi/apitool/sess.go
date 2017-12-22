@@ -2,8 +2,6 @@ package apitool
 
 import (
 	"context"
-	"encoding/json"
-	"net/http"
 
 	"github.com/Ronmi/rtoolkit/jsonapi"
 	"github.com/Ronmi/rtoolkit/session"
@@ -19,23 +17,19 @@ import (
 //     ).RegisterAll(myHandlerClass)
 func Session(m *session.Manager) jsonapi.Middleware {
 	return func(h jsonapi.Handler) jsonapi.Handler {
-		return func(
-			d *json.Decoder,
-			r *http.Request,
-			w http.ResponseWriter,
-		) (interface{}, error) {
-			req := r
-			sess, err := m.Start(w, r)
+		return func(req jsonapi.Request) (interface{}, error) {
+			r := req.R()
+			sess, err := m.Start(req.W(), r)
 			if err != nil {
 				return nil, jsonapi.E500.SetOrigin(err)
 			}
 
-			req = r.WithContext(context.WithValue(
+			r = r.WithContext(context.WithValue(
 				r.Context(),
 				session.SessionObjectKey,
 				sess,
 			))
-			return h(d, req, w)
+			return h(jsonapi.WrapRequest(req, r))
 		}
 	}
 }

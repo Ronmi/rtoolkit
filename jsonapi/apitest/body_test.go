@@ -2,8 +2,6 @@ package apitest
 
 import (
 	"bytes"
-	"encoding/json"
-	"net/http"
 	"testing"
 
 	"github.com/Ronmi/rtoolkit/jsonapi"
@@ -13,35 +11,23 @@ func TestWithOrder(t *testing.T) {
 	buf := &bytes.Buffer{}
 
 	m1 := func(h jsonapi.Handler) jsonapi.Handler {
-		return func(
-			d *json.Decoder,
-			r *http.Request,
-			w http.ResponseWriter,
-		) (interface{}, error) {
+		return func(r jsonapi.Request) (interface{}, error) {
 			buf.WriteByte('1')
-			data, err := h(d, r, w)
+			data, err := h(r)
 			buf.WriteByte('1')
 			return data, err
 		}
 	}
 	m2 := func(h jsonapi.Handler) jsonapi.Handler {
-		return func(
-			d *json.Decoder,
-			r *http.Request,
-			w http.ResponseWriter,
-		) (interface{}, error) {
+		return func(r jsonapi.Request) (interface{}, error) {
 			buf.WriteByte('2')
-			data, err := h(d, r, w)
+			data, err := h(r)
 			buf.WriteByte('2')
 			return data, err
 		}
 	}
 
-	h := func(
-		d *json.Decoder,
-		r *http.Request,
-		w http.ResponseWriter,
-	) (interface{}, error) {
+	h := func(r jsonapi.Request) (interface{}, error) {
 		buf.WriteByte('3')
 		return nil, nil
 	}

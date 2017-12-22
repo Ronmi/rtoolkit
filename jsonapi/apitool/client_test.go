@@ -1,7 +1,6 @@
 package apitool
 
 import (
-	"encoding/json"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
@@ -23,13 +22,9 @@ type RespGreeting struct {
 }
 
 // greeting is handler of Greeting API
-func Greeting(
-	dec *json.Decoder,
-	r *http.Request,
-	w http.ResponseWriter,
-) (interface{}, error) {
+func Greeting(r jsonapi.Request) (interface{}, error) {
 	var p ParamGreeting
-	if err := dec.Decode(&p); err != nil {
+	if err := r.Decode(&p); err != nil {
 		return nil, jsonapi.APPERR.SetData(
 			"parameter format error",
 		).SetCode("EParamFormat")
