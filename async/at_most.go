@@ -7,8 +7,10 @@ import (
 
 // OnceAtMost prevents running specified function too fast
 //
-// It guarantees to run the function as many times as you call and no more than once
-// within the duration.
+// It guarantees:
+//      - run the function as many times as you call
+//      - only one call is running at the same time
+//      - no more than once within the duration.
 //
 // Time is recorded before calling real function, which means the duration includes
 // function execution time.
