@@ -98,9 +98,9 @@ func TestSQLFiles(t *testing.T) {
 		cur    int
 	}{
 		{expect: exp, cur: 0},
-		{expect: exp[1:], cur: 1},
-		{expect: exp[2:], cur: 2},
-		{expect: []sqlFile{}, cur: 3},
+		{expect: exp[0:], cur: 1},
+		{expect: exp[1:], cur: 2},
+		{expect: exp[2:], cur: 3},
 		{expect: []sqlFile{}, cur: 4},
 	}
 

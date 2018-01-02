@@ -70,7 +70,7 @@ func sqlFiles(w Walker, root string, cur int) []sqlFile {
 			return e
 		}
 
-		if i > cur {
+		if i >= cur {
 			ret = append(ret, sqlFile{id: i, fn: path})
 		}
 
