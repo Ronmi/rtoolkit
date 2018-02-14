@@ -7,7 +7,7 @@ import (
 	"testing"
 )
 
-func TestCamelConverting(t *testing.T) {
+func TestCamel2Snake(t *testing.T) {
 	// [method name, expect]
 	cases := [][2]string{
 		{"CamelCase", "camel_case"},
@@ -19,7 +19,26 @@ func TestCamelConverting(t *testing.T) {
 
 	for _, c := range cases {
 		t.Run(c[0], func(t *testing.T) {
-			if actual := convertCamelTo_(c[0]); c[1] != actual {
+			if actual := ConvertCamelToSnake(c[0]); c[1] != actual {
+				t.Fatalf("expected %s, got %s", c[1], actual)
+			}
+		})
+	}
+}
+
+func TestCamel2Slash(t *testing.T) {
+	// [method name, expect]
+	cases := [][2]string{
+		{"CamelCase", "camel/case"},
+		{"URL123", "url123"},
+		{"TestIdGetter", "test/id/getter"},
+		{"TestIDGetter", "test/id/getter"},
+		{"TestID3Getter", "test/id3/getter"},
+	}
+
+	for _, c := range cases {
+		t.Run(c[0], func(t *testing.T) {
+			if actual := ConvertCamelToSlash(c[0]); c[1] != actual {
 				t.Fatalf("expected %s, got %s", c[1], actual)
 			}
 		})
