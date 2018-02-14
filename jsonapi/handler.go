@@ -3,6 +3,7 @@ package jsonapi
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"net/http"
 	"strconv"
 )
@@ -154,6 +155,19 @@ var (
 
 	// application-defined error
 	APPERR = Error{Code: 200}
+
+	// special error, preventing ServeHTTP method to encode the returned data
+	//
+	// For string, []byte or anything implements fmt.Stringer returned, we will
+	// write it to response as-is.
+	//
+	// For other type, we use fmt.FPrintf(responseWriter, "%v", returnedData).
+	//
+	// You will also have to:
+	//    - Set HTTP status code manually.
+	//    - Set necessary response headers manually.
+	//    - Take care not to be overwritten by middleware.
+	ASIS = Error{Code: -1}
 )
 
 // Handler is easy to use entry for API developer.
@@ -200,6 +214,21 @@ func (h Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	code := http.StatusInternalServerError
 	if httperr, ok := err.(Error); ok {
+		if httperr.EqualTo(ASIS) {
+			if res != nil {
+				switch x := res.(type) {
+				case string:
+					w.Write([]byte(x))
+				case []byte:
+					w.Write(x)
+				case fmt.Stringer:
+					w.Write([]byte(x.String()))
+				default:
+					fmt.Fprintf(w, "%v", res)
+				}
+			}
+			return
+		}
 		code = httperr.Code
 		if code >= 301 && code <= 303 && httperr.location != "" {
 			// 301~303 redirect
