@@ -95,7 +95,7 @@ func wrap(fn string, err error) error {
 //         // handle error
 //     }
 //
-//     if id, err = sam.Execute(db, "path", "myapp", id); err != nil {
+//     if id, err = sam.Execute(db, "path", id); err != nil {
 //         // handle error
 //     }
 //
@@ -114,6 +114,7 @@ func (s *SAM) Execute(db *sql.DB, root string, state int) (int, error) {
 	if err != nil {
 		return state, err
 	}
+	defer tx.Rollback()
 
 	for _, file := range files {
 		// no need to check here since sqlFile() has filtered them out
@@ -125,7 +126,6 @@ func (s *SAM) Execute(db *sql.DB, root string, state int) (int, error) {
 		qstrs := split(data)
 		for _, q := range qstrs {
 			if _, err := tx.Exec(string(q)); err != nil {
-				tx.Rollback()
 				return state, wrap(file.fn, err)
 			}
 		}
