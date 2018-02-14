@@ -19,6 +19,8 @@ type Middleware func(Handler) Handler
 //     2. myMiddleWare
 //     3. Logging middleware
 //     4. myHandler
+//     5. Logging middleware
+//     6. myMiddleWare
 type Registerer interface {
 	Register(mux HTTPMux, apis []API)
 	RegisterAll(mux HTTPMux, prefix string, handlers interface{})
