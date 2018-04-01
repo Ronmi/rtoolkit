@@ -14,6 +14,9 @@ import (
 //
 // Time is recorded before calling real function, which means the duration includes
 // function execution time.
+//
+// Typical usecase: You have to call external API for every connected clients, but
+// not more than 10 times per minute or you get banned.
 func OnceAtMost(dur time.Duration, f func() error) func() error {
 	lock := new(sync.Mutex)
 	last := time.Now().Add(0 - dur)
@@ -49,6 +52,11 @@ func OnceSuccessAtMost(dur time.Duration, f func() error) func() error {
 }
 
 // OnceWithin is identical to OnceAtMost, but calls within duration are ignored
+//
+// The f SHOULD be time-consuming function. If not, use RunAtLeast() instead.
+//
+// Typical usecase: You need to grab a web page at random time, but not more than
+// 10 times per minute or you get banned.
 func OnceWithin(dur time.Duration, f func() error) func() error {
 	lock := new(sync.RWMutex)
 	last := time.Now().Add(0 - dur)
