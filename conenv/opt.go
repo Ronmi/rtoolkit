@@ -11,6 +11,7 @@ type Options struct {
 	Name    string
 	Default string
 	Custom  []string
+	Field   reflect.StructField
 }
 
 func (o *Options) envKey(prefix string) (ret string) {
@@ -27,6 +28,7 @@ func (o *Options) envValue(key string) (ret string) {
 }
 
 func parseOptions(f reflect.StructField) (ret Options) {
+	ret.Field = f
 	e := f.Tag.Get("env")
 	if e == "" {
 		ret.Name = f.Name
