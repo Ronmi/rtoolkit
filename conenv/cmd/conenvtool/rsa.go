@@ -4,32 +4,37 @@ import (
 	"bytes"
 	"crypto/rand"
 	"crypto/rsa"
-	"crypto/x509"
 	"encoding/gob"
 	"flag"
 	"fmt"
-	"io/ioutil"
 	"log"
+	"os"
 
 	"github.com/Ronmi/rtoolkit/conenv"
 )
 
 const rsacode = `
 func loadRSAPriv() (key *rsa.PrivateKey, err error) {
-	data, err := ioutil.ReadFile("rsa.priv")
+	f, err := os.Open("rsa.priv")
 	if err != nil {
 		return
 	}
+	defer f.Close()
 
-	return x509.ParsePKCS1PrivateKey(data)
+	key = &rsa.PrivateKey{}
+	dec := gob.NewDecoder(f)
+	return key, dec.Decode(key)
 }
 func loadRSAPub() (key *rsa.PublicKey, err error) {
-	data, err := ioutil.ReadFile("rsa.pub")
+	f, err := os.Open("rsa.pub")
 	if err != nil {
 		return
 	}
+	defer f.Close()
 
-	return x509.ParsePKCS1PublicKey(data)
+	key = &rsa.PublicKey{}
+	dec := gob.NewDecoder(f)
+	return key, dec.Decode(key)
 }
 `
 
@@ -37,7 +42,7 @@ const rsaembed = `
 var rsaPrivateKey *rsa.PrivateKey
 
 func init() {
-	rsaPrivateKey = &rsa.PrivateKey{}
+	rsPrivateKey = &rsa.PrivateKey{}
 	data := %#v
 	buf := bytes.NewBuffer(data)
 	dec := gob.NewDecoder(buf)
@@ -46,21 +51,29 @@ func init() {
 `
 
 func loadRSAPriv(fn string) (key *rsa.PrivateKey, err error) {
-	data, err := ioutil.ReadFile(fn)
+	f, err := os.Open(fn)
 	if err != nil {
 		return
 	}
+	defer f.Close()
 
-	return x509.ParsePKCS1PrivateKey(data)
+	key = &rsa.PrivateKey{}
+	dec := gob.NewDecoder(f)
+	err = dec.Decode(key)
+	return
 }
 
 func loadRSAPub(fn string) (key *rsa.PublicKey, err error) {
-	data, err := ioutil.ReadFile(fn)
+	f, err := os.Open(fn)
 	if err != nil {
 		return
 	}
+	defer f.Close()
 
-	return x509.ParsePKCS1PublicKey(data)
+	key = &rsa.PublicKey{}
+	dec := gob.NewDecoder(f)
+	err = dec.Decode(key)
+	return
 }
 
 func genrsa() {
@@ -78,16 +91,13 @@ func genrsa() {
 		log.Fatalf("unexpected error: %s", err)
 	}
 
-	priv := x509.MarshalPKCS1PrivateKey(key)
-	pub := x509.MarshalPKCS1PublicKey(&key.PublicKey)
-
 	log.Print("Writing public key to rsa.pub...")
-	if err := ioutil.WriteFile("rsa.pub", pub, 0600); err != nil {
+	if err := saveGobData("rsa.pub", key.PublicKey); err != nil {
 		log.Fatalf("unexpected error: %s", err)
 	}
 
 	log.Print("Writing private key to rsa.priv...")
-	if err := ioutil.WriteFile("rsa.priv", priv, 0600); err != nil {
+	if err := saveGobData("rsa.priv", key); err != nil {
 		log.Fatalf("unexpected error: %s", err)
 	}
 
@@ -96,7 +106,7 @@ func genrsa() {
 	if embed {
 		buf := &bytes.Buffer{}
 		enc := gob.NewEncoder(buf)
-		enc.Encode(priv)
+		enc.Encode(key)
 		code = fmt.Sprintf(rsaembed, buf.Bytes())
 	}
 	fmt.Println(code)
