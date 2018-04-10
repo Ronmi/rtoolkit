@@ -106,7 +106,7 @@ func (p *Parser) doParse(v reflect.Value, prefix string) (err error, has bool) {
 
 		err, ok := p.parseField(v.Field(x), f, prefix)
 		if err != nil {
-			break
+			return err, has
 		}
 		has = has || ok
 	}
