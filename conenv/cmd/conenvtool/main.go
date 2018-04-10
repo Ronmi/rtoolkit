@@ -6,14 +6,17 @@ import (
 )
 
 var handlers = map[string]func(){
-	"help":   help,
-	"genrsa": genrsa,
-	"rsaenc": rsaenc,
-	"rsadec": rsadec,
-	"aesenc": aesenc,
-	"aesdec": aesdec,
-	"desenc": desenc,
-	"desdec": desdec,
+	"help":    help,
+	"genrsa":  genrsa,
+	"rsaenc":  rsaenc,
+	"rsadec":  rsadec,
+	"aesenc":  aesenc,
+	"aesdec":  aesdec,
+	"desenc":  desenc,
+	"desdec":  desdec,
+	"gendsa":  gendsa,
+	"dsasign": dsasign,
+	"dsavfy":  dsavfy,
 }
 
 func main() {
@@ -40,14 +43,17 @@ func help() {
 
 Supported actions:
 
-  help:   display this text.
-  genrsa: generate rsa key pair, with short piece of example code.
-  rsaenc: encrypt string data with previously generated key.
-  rsadec: decrypt cipher text encrypted using this tool.
-  aesenc: encrypt string data with AESEncrypt.
-  aesdec: decrypt string data with AESDecrypt.
-  desenc: encrypt string data with DESEncrypt.
-  desdec: decrypt string data with DESDecrypt.
+  help:    display this text.
+  genrsa:  generate rsa key pair, with short piece of example code.
+  rsaenc:  encrypt string data with previously generated key.
+  rsadec:  decrypt cipher text encrypted using this tool.
+  aesenc:  encrypt string data with AESEncrypt.
+  aesdec:  decrypt string data with AESDecrypt.
+  desenc:  encrypt string data with DESEncrypt.
+  desdec:  decrypt string data with DESDecrypt.
+  gendsa:  generate dsa key pairs.
+  dsasign: sign string data with DSASign.
+  dsavfy:  verify signature with DSAVerify.
 
 Example:
   
