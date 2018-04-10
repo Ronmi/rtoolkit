@@ -1,15 +1,16 @@
 package conenv
 
 import (
+	"bytes"
 	"crypto/dsa"
 	"crypto/rand"
 	"crypto/sha256"
 	"encoding/base64"
+	"encoding/gob"
 	"errors"
 	"math/big"
 	"os"
 	"reflect"
-	"strings"
 )
 
 // DSAExtension creates an extension to verify value corectness using DSA digital
@@ -39,29 +40,6 @@ func DSAExtension(key *dsa.PublicKey) (ext Extension) {
 	}
 }
 
-func encodeBigInt(i *big.Int) (code string, err error) {
-	data, err := i.GobEncode()
-	if err != nil {
-		return
-	}
-
-	return base64.StdEncoding.EncodeToString(data), err
-}
-
-func decodeBigInt(code string) (i *big.Int, err error) {
-	data := make([]byte, base64.StdEncoding.DecodedLen(len(code)))
-	n, err := base64.StdEncoding.Decode(data, []byte(code))
-	if err != nil {
-		return
-	}
-	data = data[:n]
-
-	i = &big.Int{}
-	err = i.GobDecode(data)
-
-	return
-}
-
 // DSASign generates digital signature on val
 //
 // It uses sha256.Sum256() to generate hashsum of val. The generated signature will
@@ -73,16 +51,16 @@ func DSASign(key *dsa.PrivateKey, val string) (code string, err error) {
 		return
 	}
 
-	rcode, err := encodeBigInt(r)
-	if err != nil {
+	buf := &bytes.Buffer{}
+	enc := gob.NewEncoder(buf)
+	if err = enc.Encode(r); err != nil {
 		return
 	}
-	scode, err := encodeBigInt(s)
-	if err != nil {
+	if err = enc.Encode(s); err != nil {
 		return
 	}
 
-	code = rcode + "," + scode
+	code = base64.StdEncoding.EncodeToString(buf.Bytes())
 	return
 }
 
@@ -90,17 +68,22 @@ func DSASign(key *dsa.PrivateKey, val string) (code string, err error) {
 //
 // It uses sha256.Sum256() to generate hashsum of val.
 func DSAVerify(key *dsa.PublicKey, val string, code string) (err error) {
-	codes := strings.Split(code, ",")
-	if len(codes) != 2 {
-		return errors.New("format error, not generated with DSASign?")
-	}
-
-	r, err := decodeBigInt(codes[0])
+	data := make([]byte, base64.StdEncoding.DecodedLen(len(code)))
+	n, err := base64.StdEncoding.Decode(data, []byte(code))
 	if err != nil {
 		return
 	}
-	s, err := decodeBigInt(codes[1])
-	if err != nil {
+	data = data[:n]
+
+	buf := bytes.NewBuffer(data)
+	dec := gob.NewDecoder(buf)
+
+	r := &big.Int{}
+	if err = dec.Decode(r); err != nil {
+		return
+	}
+	s := &big.Int{}
+	if err = dec.Decode(s); err != nil {
 		return
 	}
 
