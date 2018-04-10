@@ -15,4 +15,14 @@
 //
 // conenv provides plugable support for data encryption, see DESExtension() for
 // an example usecase.
+//
+// Here are tips about security when using conenv with your containerized program:
+//
+//   1. Encrypt sensitive info, password in particular.
+//   2. Keep your keys in secret.
+//   3. Sign sensitive info to prevent hackers from modifying it.
+//   4. Embed neccessary keys in your program. Neither passing from external source,
+//      nor embedding whole key.
+//
+// Take a look at package example code, which implements tips above at lowest level.
 package conenv
