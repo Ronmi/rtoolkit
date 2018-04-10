@@ -30,7 +30,8 @@ func DSAExtension(key *dsa.PublicKey) (ext Extension) {
 		) (err error) {
 			code, ok := os.LookupEnv(name + "_SIGN")
 			if !ok {
-				return errors.New("failed to verify signature")
+				return errors.New(
+					"failed to verify signature of " + name)
 			}
 
 			return DSAVerify(key, val, code)

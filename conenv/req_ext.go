@@ -9,7 +9,7 @@ import (
 var RequiredExtension = Extension{
 	Validate: func(opt Options, v reflect.Value, name, str string) (err error) {
 		if str == "" {
-			err = errors.New("required field is not set")
+			err = errors.New("required field is not set: " + name)
 		}
 		return
 	},
