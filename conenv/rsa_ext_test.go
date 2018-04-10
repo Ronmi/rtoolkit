@@ -17,7 +17,7 @@ func TestRSA(t *testing.T) {
 
 	code, err := RSAEncrypt(&key.PublicKey, plain)
 	if err != nil {
-		t.Fatalf("unexpected error wher encrypting: %s", err)
+		t.Fatalf("unexpected error when encrypting: %s", err)
 	}
 
 	if code == plain {
