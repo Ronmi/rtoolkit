@@ -139,7 +139,7 @@ func gendsa() {
 	if embed {
 		buf := &bytes.Buffer{}
 		enc := gob.NewEncoder(buf)
-		enc.Encode(key)
+		enc.Encode(key.PublicKey)
 		code = fmt.Sprintf(dsaembed, buf.Bytes())
 	}
 	fmt.Println(code)
