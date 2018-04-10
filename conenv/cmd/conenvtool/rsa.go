@@ -33,7 +33,7 @@ func loadRSAPub() (key *rsa.PublicKey, err error) {
 }
 `
 
-const rsaembbed = `
+const rsaembed = `
 var rsaPrivateKey *rsa.PrivateKey
 
 func init() {
@@ -97,7 +97,7 @@ func genrsa() {
 		buf := &bytes.Buffer{}
 		enc := gob.NewEncoder(buf)
 		enc.Encode(priv)
-		code = fmt.Sprintf(rsaembbed, buf.Bytes())
+		code = fmt.Sprintf(rsaembed, buf.Bytes())
 	}
 	fmt.Println(code)
 }
