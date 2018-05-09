@@ -114,13 +114,9 @@ func TestHandler(t *testing.T) {
 		})
 	}
 
-	out := "<a href=\"http://a.b\">Moved Permanently</a>.\n\n"
 	uri := "http://a.b"
 	t.Run("nil-E301", func(t *testing.T) {
 		w := run(fac(nil, E301.SetData(uri)))
-		if b := w.Body.String(); b != out {
-			t.Errorf("unexpected content: %s", b)
-		}
 		if w.Code != 301 {
 			t.Errorf("unexpected status: %d", w.Code)
 		}
@@ -130,9 +126,6 @@ func TestHandler(t *testing.T) {
 	})
 	t.Run("data-E301", func(t *testing.T) {
 		w := run(fac(1, E301.SetData(uri)))
-		if b := w.Body.String(); b != out {
-			t.Errorf("unexpected content: %s", b)
-		}
 		if w.Code != 301 {
 			t.Errorf("unexpected status: %d", w.Code)
 		}

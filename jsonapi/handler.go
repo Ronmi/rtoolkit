@@ -187,6 +187,9 @@ var (
 //
 //     return nil, jsonapi.E301.SetData("http://google.com")
 //
+// Redirecting depends on http.Redirect(). The data returned from handler will never
+// write to ResponseWriter.
+//
 // This basically obey the http://jsonapi.org rules:
 //
 //     - Return {"data": your_data} if error == nil
