@@ -15,9 +15,12 @@ import (
 //     jsonapi.With(
 //         apitool.Session(mySessMgr),
 //     ).RegisterAll(myHandlerClass)
+//
+// Created middleware will try to save update cookie ttl value if possible. It
+// fails silently.
 func Session(m *session.Manager) jsonapi.Middleware {
 	return func(h jsonapi.Handler) jsonapi.Handler {
-		return func(req jsonapi.Request) (interface{}, error) {
+		return func(req jsonapi.Request) (i interface{}, e error) {
 			r := req.R()
 			sess, err := m.Start(req.W(), r)
 			if err != nil {
@@ -29,7 +32,10 @@ func Session(m *session.Manager) jsonapi.Middleware {
 				session.SessionObjectKey,
 				sess,
 			))
-			return h(jsonapi.WrapRequest(req, r))
+			i, e = h(jsonapi.WrapRequest(req, r))
+
+			_ = sess.Save(req.W())
+			return
 		}
 	}
 }
