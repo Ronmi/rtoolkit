@@ -170,6 +170,20 @@ var (
 	ASIS = Error{Code: -1}
 )
 
+// Failed wraps you error object and prepares suitable return type to be used in controller
+//
+// Here's a common usage:
+//
+//   if err := req.Decode(&param); err != nil {
+//       return jsonapi.E(err, jsonapi.E400.SetData("invalid parameter"))
+//   }
+//   if err := param.IsValid(); err != nil {
+//       return jsonapi.E(err, jsonapi.E400.SetData("invalid parameter"))
+//   }
+func Failed(e1 error, e2 Error) (data interface{}, err error) {
+	return data, e2.SetOrigin(e1)
+}
+
 // Handler is easy to use entry for API developer.
 //
 // Just return something, and it will be encoded to JSON format and send to client.
