@@ -1,6 +1,7 @@
 package jsonapi
 
 import (
+	"context"
 	"encoding/json"
 	"net/http"
 )
@@ -10,6 +11,7 @@ type Request interface {
 	Decode(interface{}) error
 	R() *http.Request
 	W() http.ResponseWriter
+	WithValue(key, val interface{}) Request
 }
 
 // FakeRequest implements a Request and let you do some magic in it
@@ -29,6 +31,22 @@ func (r *FakeRequest) R() *http.Request {
 
 func (r *FakeRequest) W() http.ResponseWriter {
 	return r.Resp
+}
+
+func (r *FakeRequest) WithValue(key, val interface{}) (ret Request) {
+	req := r.Req
+	req = req.WithContext(
+		context.WithValue(
+			req.Context(),
+			key,
+			val,
+		),
+	)
+	return &FakeRequest{
+		Decoder: r.Decoder,
+		Req:     req,
+		Resp:    r.Resp,
+	}
 }
 
 // FromHTTP creates a Request instance from http request and response
